@@ -1,12 +1,16 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.db import SessionLocal
 from app.routes import auth as auth_routes
 from app.routes import subjects as subject_routes
 from app.services.users import ensure_admin_user
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "out"
 
 
 @asynccontextmanager
@@ -24,3 +28,7 @@ app.include_router(subject_routes.router)
 @app.get("/api/v1/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+
+if FRONTEND_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
