@@ -77,3 +77,29 @@ export interface Artifact {
   metadata_json: Record<string, unknown>;
   created_at: string;
 }
+
+export type SourceKind = "rss" | "arxiv" | "url" | "notes";
+
+export interface Source {
+  id: number;
+  subject_id: number;
+  kind: SourceKind;
+  display_name: string;
+  config_json: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface BibliographyEntry {
+  id: number;
+  subject_id: number;
+  corpus_item_id: number;
+  comments: string;
+  created_at: string;
+  updated_at: string;
+  title: string;
+  url: string | null;
+  authors: string[];
+  summary: string | null;
+  tags: string[];
+  importance: number | null;
+}
