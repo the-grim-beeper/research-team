@@ -59,9 +59,17 @@ function SubjectView() {
   return (
     <>
       <div className="mb-8">
-        <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-900">
-          ← All subjects
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-900">
+            ← All subjects
+          </Link>
+          <Link
+            href={`/library/?id=${subject.id}`}
+            className="text-sm text-neutral-700 hover:text-neutral-900 underline"
+          >
+            Library →
+          </Link>
+        </div>
         <h1 className="mt-2 text-2xl font-semibold">{subject.title}</h1>
         {subject.brief && (
           <p className="mt-1 text-neutral-600 whitespace-pre-wrap">{subject.brief}</p>
