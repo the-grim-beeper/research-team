@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     openrouter_app_title: str = "Research Team"
     summary_model: str = "openai/gpt-4o-mini"
     max_tokens_default: int = 1000
+    daily_run_hour_utc: int = 3
 
 
 settings = Settings()

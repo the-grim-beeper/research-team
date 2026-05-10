@@ -78,6 +78,11 @@ async def update_agent_settings(
 
     await session.commit()
     await session.refresh(agent)
+
+    # Keep the cron schedule in sync with the new settings (no-op when scheduler isn't running).
+    from app.services import scheduler  # local import avoids circular at module load
+
+    scheduler.schedule_agent(agent)
     return agent
 
 
@@ -103,4 +108,9 @@ async def spawn_default_team(session: AsyncSession, subject_id: int) -> list[Age
     await session.commit()
     for a in agents:
         await session.refresh(a)
+
+    from app.services import scheduler  # local import avoids circular at module load
+
+    for a in agents:
+        scheduler.schedule_agent(a)
     return agents
