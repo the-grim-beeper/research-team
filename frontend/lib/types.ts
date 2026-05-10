@@ -53,3 +53,27 @@ export interface AgentUpdate {
   daily_budget_usd?: string | number;
   system_prompt_addendum?: string;
 }
+
+export type ArtifactKind =
+  | "note"
+  | "briefing"
+  | "synthesis"
+  | "critique"
+  | "roundtable_post"
+  | "instruction"
+  | "source_summary"
+  | "bibliography_comment";
+
+export interface Artifact {
+  id: number;
+  subject_id: number;
+  kind: ArtifactKind | string;
+  author_type: "agent" | "user";
+  author_id: number | null;
+  parent_id: number | null;
+  addressed_to: number | null;
+  title: string;
+  body_md: string;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+}

@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { AgentGrid } from "@/components/agent-grid";
-import type { Agent, Subject } from "@/lib/types";
+import { ArtifactList } from "@/components/artifact-list";
+import type { Agent, Artifact, Subject } from "@/lib/types";
 
 function SubjectView() {
   const params = useSearchParams();
@@ -15,6 +16,7 @@ function SubjectView() {
 
   const [subject, setSubject] = useState<Subject | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,12 +29,14 @@ function SubjectView() {
     setLoading(true);
     setError(null);
     try {
-      const [s, a] = await Promise.all([
+      const [s, a, arts] = await Promise.all([
         api<Subject>(`/subjects/${id}`),
         api<Agent[]>(`/subjects/${id}/agents`),
+        api<Artifact[]>(`/subjects/${id}/artifacts`),
       ]);
       setSubject(s);
       setAgents(a);
+      setArtifacts(arts);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Load failed");
     } finally {
@@ -48,6 +52,10 @@ function SubjectView() {
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!subject) return null;
 
+  const agentsById: Record<number, Agent> = Object.fromEntries(
+    agents.map((a) => [a.id, a]),
+  );
+
   return (
     <>
       <div className="mb-8">
@@ -60,6 +68,13 @@ function SubjectView() {
         )}
       </div>
       <AgentGrid agents={agents} onUpdated={refresh} />
+
+      <section className="mt-12 space-y-3">
+        <h2 className="text-sm font-medium text-neutral-600 uppercase tracking-wide">
+          Recent artifacts
+        </h2>
+        <ArtifactList artifacts={artifacts} agentsById={agentsById} />
+      </section>
     </>
   );
 }
