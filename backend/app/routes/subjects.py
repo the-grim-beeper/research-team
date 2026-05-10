@@ -6,7 +6,7 @@ from app.models.user import User
 from app.schemas.subject import SubjectCreate, SubjectRead
 from app.services.subjects import (
     ActiveSubjectLimit,
-    archive_subject,
+    archive_and_unschedule,
     create_subject,
     get_subject,
     list_subjects,
@@ -64,7 +64,7 @@ async def archive_endpoint(
     session: AsyncSession = Depends(get_session),
 ) -> SubjectRead:
     try:
-        s = await archive_subject(session, user_id=current.id, subject_id=subject_id)
+        s = await archive_and_unschedule(session, user_id=current.id, subject_id=subject_id)
     except LookupError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(e)) from e
     return _to_read(s)

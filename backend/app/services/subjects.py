@@ -46,6 +46,19 @@ async def get_subject(session: AsyncSession, user_id: int, subject_id: int) -> S
     return subject
 
 
+async def archive_and_unschedule(session: AsyncSession, user_id: int, subject_id: int) -> Subject:
+    """Archive helper that also removes the subject's agents from the cron schedule."""
+    from app.models.agent import Agent
+    from app.services import scheduler
+    from app.services.subjects import archive_subject as _archive
+
+    subject = await _archive(session, user_id=user_id, subject_id=subject_id)
+    rows = await session.scalars(select(Agent).where(Agent.subject_id == subject_id))
+    for a in rows.all():
+        scheduler.unschedule_agent(a.id)
+    return subject
+
+
 async def list_subjects(
     session: AsyncSession, user_id: int, status: str | None = None
 ) -> list[Subject]:
