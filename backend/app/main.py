@@ -6,7 +6,9 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.db import SessionLocal
+from app.routes import agents as agent_routes
 from app.routes import auth as auth_routes
+from app.routes import roles as role_routes
 from app.routes import subjects as subject_routes
 from app.services.users import ensure_admin_user
 
@@ -23,6 +25,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Research Team", version="0.1.0", lifespan=lifespan)
 app.include_router(auth_routes.router)
 app.include_router(subject_routes.router)
+app.include_router(role_routes.router)
+app.include_router(agent_routes.router)
 
 
 @app.get("/api/v1/health")
