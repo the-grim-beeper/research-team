@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.subject import Subject
+from app.services.agents import spawn_default_team
 
 ACTIVE_LIMIT = 3
 
@@ -13,10 +14,12 @@ class ActiveSubjectLimit(Exception):
 
 
 async def _count_active(session: AsyncSession, user_id: int) -> int:
-    rows = await session.scalars(
-        select(Subject).where(Subject.user_id == user_id, Subject.status == "active")
+    result = await session.scalar(
+        select(func.count())
+        .select_from(Subject)
+        .where(Subject.user_id == user_id, Subject.status == "active")
     )
-    return len(rows.all())
+    return result or 0
 
 
 async def create_subject(session: AsyncSession, user_id: int, title: str, brief: str) -> Subject:
@@ -32,6 +35,14 @@ async def create_subject(session: AsyncSession, user_id: int, title: str, brief:
     session.add(subject)
     await session.commit()
     await session.refresh(subject)
+    await spawn_default_team(session, subject.id)
+    return subject
+
+
+async def get_subject(session: AsyncSession, user_id: int, subject_id: int) -> Subject:
+    subject = await session.get(Subject, subject_id)
+    if subject is None or subject.user_id != user_id:
+        raise LookupError(f"Subject {subject_id} not found")
     return subject
 
 

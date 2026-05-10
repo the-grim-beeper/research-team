@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import type { Subject } from "@/lib/types";
 
@@ -61,13 +62,13 @@ export function SubjectList() {
           <ul className="divide-y divide-neutral-200 rounded border border-neutral-200">
             {active.map((s) => (
               <li key={s.id} className="flex items-center justify-between p-3">
-                <div>
+                <Link href={`/subject/?id=${s.id}`} className="flex-1 hover:underline">
                   <div className="font-medium">{s.title}</div>
                   {s.brief && <div className="text-sm text-neutral-600">{s.brief}</div>}
-                </div>
+                </Link>
                 <button
                   onClick={() => onArchive(s.id)}
-                  className="text-sm text-neutral-600 hover:text-neutral-900"
+                  className="ml-3 text-sm text-neutral-600 hover:text-neutral-900"
                 >
                   Archive
                 </button>
