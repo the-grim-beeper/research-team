@@ -24,7 +24,7 @@ async def test_create_list_archive_flow(client):
     assert r.status_code == 200
     assert r.json()["status"] == "archived"
 
-    r = await client.get("/api/v1/subjects?status_filter=active", headers=headers)
+    r = await client.get("/api/v1/subjects?status=active", headers=headers)
     assert r.json() == []
 
 

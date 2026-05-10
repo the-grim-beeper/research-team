@@ -22,11 +22,11 @@ def _to_read(s) -> SubjectRead:
 
 @router.get("", response_model=list[SubjectRead])
 async def list_endpoint(
-    status_filter: str | None = None,
+    status: str | None = None,
     current: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> list[SubjectRead]:
-    rows = await list_subjects(session, user_id=current.id, status=status_filter)
+    rows = await list_subjects(session, user_id=current.id, status=status)
     return [_to_read(s) for s in rows]
 
 
