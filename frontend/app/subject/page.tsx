@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { AgentGrid } from "@/components/agent-grid";
-import { ArtifactList } from "@/components/artifact-list";
+import { BriefingCard } from "@/components/briefing-card";
+import { Roundtable } from "@/components/roundtable";
+import { RunStandupButton } from "@/components/run-standup-button";
 import type { Agent, Artifact, Subject } from "@/lib/types";
 
 function SubjectView() {
@@ -32,7 +34,7 @@ function SubjectView() {
       const [s, a, arts] = await Promise.all([
         api<Subject>(`/subjects/${id}`),
         api<Agent[]>(`/subjects/${id}/agents`),
-        api<Artifact[]>(`/subjects/${id}/artifacts`),
+        api<Artifact[]>(`/subjects/${id}/artifacts?limit=100`),
       ]);
       setSubject(s);
       setAgents(a);
@@ -56,9 +58,14 @@ function SubjectView() {
     agents.map((a) => [a.id, a]),
   );
 
+  const briefings = artifacts
+    .filter((a) => a.kind === "briefing")
+    .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+  const latestBriefing = briefings[0] ?? null;
+
   return (
     <>
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center justify-between">
           <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-900">
             ← All subjects
@@ -70,18 +77,38 @@ function SubjectView() {
             Library →
           </Link>
         </div>
-        <h1 className="mt-2 text-2xl font-semibold">{subject.title}</h1>
-        {subject.brief && (
-          <p className="mt-1 text-neutral-600 whitespace-pre-wrap">{subject.brief}</p>
-        )}
+        <div className="mt-2 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold">{subject.title}</h1>
+            {subject.brief && (
+              <p className="mt-1 text-neutral-600 whitespace-pre-wrap">{subject.brief}</p>
+            )}
+          </div>
+          <RunStandupButton subjectId={subject.id} onComplete={refresh} />
+        </div>
       </div>
-      <AgentGrid agents={agents} onUpdated={refresh} />
 
-      <section className="mt-12 space-y-3">
-        <h2 className="text-sm font-medium text-neutral-600 uppercase tracking-wide">
-          Recent artifacts
+      <section className="mb-10">
+        <BriefingCard briefing={latestBriefing} agentsById={agentsById} />
+      </section>
+
+      <section className="mb-10">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-600 mb-3">
+          Team
         </h2>
-        <ArtifactList artifacts={artifacts} agentsById={agentsById} />
+        <AgentGrid agents={agents} onUpdated={refresh} />
+      </section>
+
+      <section className="mb-10">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-600 mb-3">
+          Roundtable
+        </h2>
+        <Roundtable
+          artifacts={artifacts}
+          agentsById={agentsById}
+          subjectId={subject.id}
+          onChange={refresh}
+        />
       </section>
     </>
   );
@@ -99,7 +126,7 @@ export default function SubjectPage() {
 
   return (
     <main className="mx-auto max-w-5xl p-8">
-      <header className="mb-8 flex items-center justify-between">
+      <header className="mb-6 flex items-center justify-between">
         <Link href="/" className="text-2xl font-semibold hover:underline">
           Research Team
         </Link>
