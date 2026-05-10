@@ -30,16 +30,24 @@ def _maybe_reset_budget(agent: Agent, now: datetime) -> None:
         agent.spent_today_usd = Decimal("0")
 
 
-def _build_messages(agent: Agent, memory_text: str, instruction: str) -> list[dict[str, str]]:
+def _build_messages(
+    agent: Agent,
+    memory_text: str,
+    instruction: str,
+    extra_system_context: str | None = None,
+) -> list[dict[str, str]]:
     memory_block = memory_text or "(no prior memory)"
-    return [
-        {"role": "system", "content": agent.system_prompt},
+    messages: list[dict[str, str]] = [{"role": "system", "content": agent.system_prompt}]
+    if extra_system_context:
+        messages.append({"role": "system", "content": extra_system_context})
+    messages.append(
         {
             "role": "system",
             "content": "Your private memory (most recent first):\n" + memory_block,
-        },
-        {"role": "user", "content": instruction},
-    ]
+        }
+    )
+    messages.append({"role": "user", "content": instruction})
+    return messages
 
 
 def _format_memory(entries) -> str:
@@ -54,8 +62,12 @@ async def run_agent_once(
     agent_id: int,
     user_id: int,
     user_instruction: str | None = None,
-    chat_fn: ChatFn = openrouter.chat,
+    artifact_kind: str = "note",
+    extra_system_context: str | None = None,
+    chat_fn: ChatFn | None = None,
 ) -> Artifact:
+    if chat_fn is None:
+        chat_fn = openrouter.chat
     agent = await get_agent(session, agent_id=agent_id, user_id=user_id)
 
     now = datetime.now(timezone.utc)
@@ -76,7 +88,7 @@ async def run_agent_once(
         "your role and prior memory."
     )
 
-    messages = _build_messages(agent, memory_text, instruction)
+    messages = _build_messages(agent, memory_text, instruction, extra_system_context)
 
     result = await chat_fn(
         messages,
@@ -117,7 +129,7 @@ async def run_agent_once(
     artifact = await artifact_service.create(
         session,
         subject_id=agent.subject_id,
-        kind="note",
+        kind=artifact_kind,
         author_type="agent",
         author_id=agent.id,
         body_md=result.text,

@@ -12,7 +12,9 @@ from app.routes import auth as auth_routes
 from app.routes import execution as execution_routes
 from app.routes import library as library_routes
 from app.routes import roles as role_routes
+from app.routes import standup as standup_routes
 from app.routes import subjects as subject_routes
+from app.services import scheduler
 from app.services.users import ensure_admin_user
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "out"
@@ -22,7 +24,11 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "out
 async def lifespan(app: FastAPI):
     async with SessionLocal() as session:
         await ensure_admin_user(session, settings.admin_email, settings.admin_password)
-    yield
+    await scheduler.start(SessionLocal)
+    try:
+        yield
+    finally:
+        await scheduler.shutdown()
 
 
 app = FastAPI(title="Research Team", version="0.1.0", lifespan=lifespan)
@@ -33,6 +39,7 @@ app.include_router(agent_routes.router)
 app.include_router(artifact_routes.router)
 app.include_router(execution_routes.router)
 app.include_router(library_routes.router)
+app.include_router(standup_routes.router)
 
 
 @app.get("/api/v1/health")
