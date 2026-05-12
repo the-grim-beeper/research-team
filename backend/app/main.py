@@ -1,3 +1,5 @@
+import logging
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -17,17 +19,29 @@ from app.routes import subjects as subject_routes
 from app.services import scheduler
 from app.services.users import ensure_admin_user
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    stream=sys.stdout,
+    force=True,
+)
+log = logging.getLogger("app.lifespan")
+
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "out"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    log.info("lifespan: bootstrapping admin user")
     async with SessionLocal() as session:
         await ensure_admin_user(session, settings.admin_email, settings.admin_password)
+    log.info("lifespan: starting scheduler")
     await scheduler.start(SessionLocal)
+    log.info("lifespan: ready")
     try:
         yield
     finally:
+        log.info("lifespan: shutting down scheduler")
         await scheduler.shutdown()
 
 
